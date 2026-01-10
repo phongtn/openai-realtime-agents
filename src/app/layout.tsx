@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./lib/envSetup";
+import React from "react";
 
 export const metadata: Metadata = {
   title: "Realtime API Agents",
