@@ -1,14 +1,16 @@
-import { simpleHandoffScenario } from './simpleHandoff';
-import { customerServiceRetailScenario } from './customerServiceRetail';
-import { chatSupervisorScenario } from './chatSupervisor';
+import {chatSupervisorScenario} from './chatSupervisor';
 
-import type { RealtimeAgent } from '@openai/agents/realtime';
+import type {RealtimeAgent} from '@openai/agents/realtime';
+import {langTutorScenario} from "@/app/agentConfigs/langTutor";
+import {taxiDriveScenario} from "@/app/agentConfigs/langTutorTaxiDrive";
 
-// Map of scenario key -> array of RealtimeAgent objects
+// Map of a scenario key -> array of RealtimeAgent objects
 export const allAgentSets: Record<string, RealtimeAgent[]> = {
-  simpleHandoff: simpleHandoffScenario,
-  customerServiceRetail: customerServiceRetailScenario,
-  chatSupervisor: chatSupervisorScenario,
+    // simpleHandoff: simpleHandoffScenario,
+    // customerServiceRetail: customerServiceRetailScenario,
+    chatSupervisor: chatSupervisorScenario,
+    langTutor: langTutorScenario,
+    taxiDrive: taxiDriveScenario
 };
 
-export const defaultAgentSetKey = 'chatSupervisor';
+export const defaultAgentSetKey = 'taxiDrive';
