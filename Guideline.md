@@ -94,6 +94,126 @@ Truy cập `http://localhost:3000` để xem ứng dụng.
 - Định nghĩa tool trong agent config.
 - Cung cấp schema và logic thực thi nếu cần (client-side logic).
 
+---
+
+## 4. Hướng dẫn Thiết lập Kết nối WebRTC
+
+Dự án sử dụng **WebRTC** để truyền tải âm thanh hai chiều theo thời gian thực giữa trình duyệt và OpenAI Realtime API.
+
+### Kiến trúc kết nối:
+```
+┌─────────────┐      1. Lấy Token       ┌──────────────────┐
+│   Browser   │ ──────────────────────▶ │  /api/session    │
+│  (Client)   │ ◀────────────────────── │  (Next.js API)   │
+└─────────────┘   Ephemeral Token       └──────────────────┘
+       │                                         │
+       │  2. WebRTC Offer/Answer                 │ POST to OpenAI
+       ▼                                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 OpenAI Realtime API (WebRTC)                │
+│              (gpt-4o-realtime-preview-2025-06-03)           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Luồng kết nối chi tiết:
+
+#### Bước 1: Lấy Ephemeral Token
+Client gọi API `/api/session` để lấy token tạm thời (ephemeral key) từ OpenAI.
+
+**File:** `src/app/api/session/route.ts`
+```typescript
+const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "gpt-4o-realtime-preview-2025-06-03",
+  }),
+});
+```
+> **Lưu ý:** Token này có thời hạn ngắn và chỉ dùng một lần để thiết lập kết nối WebRTC.
+
+#### Bước 2: Khởi tạo RealtimeSession với WebRTC Transport
+Hook `useRealtimeSession` tạo `RealtimeSession` sử dụng `OpenAIRealtimeWebRTC` làm transport layer.
+
+**File:** `src/app/hooks/useRealtimeSession.ts`
+```typescript
+import { RealtimeSession, OpenAIRealtimeWebRTC } from '@openai/agents/realtime';
+
+sessionRef.current = new RealtimeSession(rootAgent, {
+  transport: new OpenAIRealtimeWebRTC({
+    audioElement,  // HTML Audio element để phát âm thanh từ server
+    changePeerConnection: async (pc: RTCPeerConnection) => {
+      applyCodec(pc);  // Thiết lập codec ưu tiên
+      return pc;
+    },
+  }),
+  model: 'gpt-4o-realtime-preview-2025-06-03',
+  config: {
+    inputAudioTranscription: {
+      model: 'gpt-4o-mini-transcribe',  // Model transcribe đầu vào
+    },
+  },
+});
+
+await sessionRef.current.connect({ apiKey: ephemeralKey });
+```
+
+#### Bước 3: Thiết lập RTCPeerConnection
+SDK tự động:
+1. Tạo `RTCPeerConnection`.
+2. Thêm audio track từ microphone của người dùng.
+3. Tạo SDP Offer gửi đến OpenAI.
+4. Nhận SDP Answer và hoàn tất kết nối.
+
+### Cấu hình Codec âm thanh:
+Dự án hỗ trợ chọn codec qua query parameter `?codec=`:
+- `opus` (mặc định): Chất lượng cao, 48 kHz.
+- `pcmu` / `pcma`: Băng thông hẹp 8 kHz, mô phỏng chất lượng điện thoại PSTN.
+
+**File:** `src/app/lib/codecUtils.ts`
+```typescript
+export function applyCodecPreferences(pc: RTCPeerConnection, codec: string): void {
+  const caps = RTCRtpSender.getCapabilities?.('audio');
+  const pref = caps.codecs.find(c => c.mimeType.toLowerCase() === `audio/${codec}`);
+  pc.getTransceivers()
+    .filter(t => t.sender?.track?.kind === 'audio')
+    .forEach(t => t.setCodecPreferences([pref]));
+}
+```
+
+### Quản lý phiên làm việc:
+- **Kết nối:** `connect()` trong `useRealtimeSession`.
+- **Ngắt kết nối:** `disconnect()` đóng session và giải phóng tài nguyên.
+- **Mute/Unmute:** `mute(true/false)` tắt/bật âm thanh gửi đi.
+- **Interrupt:** `interrupt()` ngắt phản hồi đang phát.
+
+### Xử lý sự kiện:
+Session lắng nghe các sự kiện từ server:
+```typescript
+sessionRef.current.on("transport_event", handleTransportEvent);
+sessionRef.current.on("agent_handoff", handleAgentHandoff);
+sessionRef.current.on("guardrail_tripped", handleGuardrailTripped);
+```
+
+### Khắc phục sự cố WebRTC:
+
+| Vấn đề | Nguyên nhân | Giải pháp |
+|--------|-------------|-----------|
+| Không kết nối được | Firewall chặn UDP | Mở UDP ports hoặc dùng TURN server |
+| Không nghe được | Audio element chưa play | Kiểm tra `audioElement.play()` |
+| Âm thanh bị gián đoạn | Mạng không ổn định | Kiểm tra kết nối internet |
+| Token expired | Token đã hết hạn | Gọi lại `/api/session` để lấy token mới |
+
+### Yêu cầu môi trường:
+- **HTTPS**: WebRTC yêu cầu kết nối HTTPS (localhost được miễn trừ).
+- **Quyền Microphone**: Người dùng cần cấp quyền truy cập microphone.
+- **Browser hỗ trợ**: Chrome, Firefox, Edge, Safari phiên bản mới.
+
+---
+
 ### Lưu ý quan trọng:
 - **Agents SDK**: Dự án này phụ thuộc nhiều vào `@openai/agents`. Hãy tham khảo tài liệu của SDK nếu cần tùy chỉnh sâu về luồng agent.
 - **WebRTC**: Đảm bảo môi trường mạng cho phép kết nối WebRTC (UDP ports).

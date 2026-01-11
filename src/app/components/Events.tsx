@@ -34,14 +34,14 @@ function Events({ isExpanded }: EventsProps) {
   return (
     <div
       className={
-        (isExpanded ? "w-1/2 overflow-auto" : "w-0 overflow-hidden opacity-0") +
-        " transition-all rounded-xl duration-200 ease-in-out flex-col bg-white"
+        (isExpanded ? "h-full w-full overflow-auto" : "h-0 overflow-hidden opacity-0") +
+        " transition-all rounded-xl duration-200 ease-in-out flex flex-col bg-white"
       }
       ref={eventLogsContainerRef}
     >
       {isExpanded && (
         <div>
-          <div className="flex items-center justify-between px-6 py-3.5 sticky top-0 z-10 text-base border-b bg-white rounded-t-xl">
+          <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-3.5 sticky top-0 z-10 text-sm md:text-base border-b bg-white rounded-t-xl">
             <span className="font-semibold">Logs</span>
           </div>
           <div>
@@ -54,7 +54,7 @@ function Events({ isExpanded }: EventsProps) {
               return (
                 <div
                   key={`${log.id}-${idx}`}
-                  className="border-t border-gray-200 py-2 px-6 font-mono"
+                  className="border-t border-gray-200 py-2 px-4 md:px-6 font-mono"
                 >
                   <div
                     onClick={() => toggleExpand(log.id)}
@@ -65,11 +65,11 @@ function Events({ isExpanded }: EventsProps) {
                         style={{ color: arrowInfo.color }}
                         className="ml-1 mr-2"
                       >
-                      {arrowInfo.symbol}
+                        {arrowInfo.symbol}
                       </span>
                       <span
                         className={
-                          "flex-1 text-sm " +
+                          "flex-1 text-xs md:text-sm truncate " +
                           (isError ? "text-red-600" : "text-gray-800")
                         }
                       >

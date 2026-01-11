@@ -1,7 +1,7 @@
 "use client";
-import React, {useEffect, useRef, useState} from "react";
-import {useSearchParams} from "next/navigation";
-import {v4 as uuidv4} from "uuid";
+import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
 
 import Image from "next/image";
 
@@ -11,22 +11,22 @@ import Events from "./components/Events";
 import BottomToolbar from "./components/BottomToolbar";
 
 // Types
-import {SessionStatus} from "@/app/types";
-import type {RealtimeAgent} from '@openai/agents/realtime';
+import { SessionStatus } from "@/app/types";
+import type { RealtimeAgent } from '@openai/agents/realtime';
 
 // Context providers & hooks
-import {useTranscript} from "@/app/contexts/TranscriptContext";
-import {useEvent} from "@/app/contexts/EventContext";
-import {useRealtimeSession} from "./hooks/useRealtimeSession";
-import {createModerationGuardrail} from "@/app/agentConfigs/guardrails";
+import { useTranscript } from "@/app/contexts/TranscriptContext";
+import { useEvent } from "@/app/contexts/EventContext";
+import { useRealtimeSession } from "./hooks/useRealtimeSession";
+import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 
 // Agent configs
-import {allAgentSets, defaultAgentSetKey} from "@/app/agentConfigs";
-import {customerServiceRetailScenario} from "@/app/agentConfigs/customerServiceRetail";
-import {chatSupervisorScenario} from "@/app/agentConfigs/chatSupervisor";
-import {customerServiceRetailCompanyName} from "@/app/agentConfigs/customerServiceRetail";
-import {chatSupervisorCompanyName} from "@/app/agentConfigs/chatSupervisor";
-import {simpleHandoffScenario} from "@/app/agentConfigs/simpleHandoff";
+import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
+import { customerServiceRetailScenario } from "@/app/agentConfigs/customerServiceRetail";
+import { chatSupervisorScenario } from "@/app/agentConfigs/chatSupervisor";
+import { customerServiceRetailCompanyName } from "@/app/agentConfigs/customerServiceRetail";
+import { chatSupervisorCompanyName } from "@/app/agentConfigs/chatSupervisor";
+import { simpleHandoffScenario } from "@/app/agentConfigs/simpleHandoff";
 
 // Map used by connected logic for scenarios defined via the SDK.
 const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
@@ -38,9 +38,9 @@ const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
 };
 
 import useAudioDownload from "./hooks/useAudioDownload";
-import {useHandleSessionHistory} from "./hooks/useHandleSessionHistory";
-import {langTutorScenario} from "@/app/agentConfigs/langTutor";
-import {taxiDriveScenario} from "@/app/agentConfigs/langTutorTaxiDrive";
+import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
+import { langTutorScenario } from "@/app/agentConfigs/langTutor";
+import { taxiDriveScenario } from "@/app/agentConfigs/langTutorTaxiDrive";
 
 
 
@@ -66,7 +66,7 @@ function App() {
         addTranscriptMessage,
         addTranscriptBreadcrumb,
     } = useTranscript();
-    const {logClientEvent, logServerEvent} = useEvent();
+    const { logClientEvent, logServerEvent } = useEvent();
 
     const [selectedAgentName, setSelectedAgentName] = useState<string>("");
     const [selectedAgentConfigSet, setSelectedAgentConfigSet] = useState<
@@ -125,7 +125,7 @@ function App() {
     );
 
     // Initialize the recording hook.
-    const {startRecording, stopRecording, downloadRecording} =
+    const { startRecording, stopRecording, downloadRecording } =
         useAudioDownload();
 
     const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
@@ -185,7 +185,7 @@ function App() {
     }, [isPTTActive]);
 
     const fetchEphemeralKey = async (): Promise<string | null> => {
-        logClientEvent({url: "/session"}, "fetch_session_token_request");
+        logClientEvent({ url: "/session" }, "fetch_session_token_request");
         const tokenResponse = await fetch("/api/session");
         const data = await tokenResponse.json();
         logServerEvent(data, "fetch_session_token_response");
@@ -256,10 +256,10 @@ function App() {
                 id,
                 type: 'message',
                 role: 'user',
-                content: [{type: 'input_text', text}],
+                content: [{ type: 'input_text', text }],
             },
         });
-        sendClientEvent({type: 'response.create'}, '(simulated user text message)');
+        sendClientEvent({ type: 'response.create' }, '(simulated user text message)');
     };
 
     const updateSession = (shouldTriggerResponse: boolean = false) => {
@@ -308,7 +308,7 @@ function App() {
         interrupt();
 
         setIsPTTUserSpeaking(true);
-        sendClientEvent({type: 'input_audio_buffer.clear'}, 'clear PTT buffer');
+        sendClientEvent({ type: 'input_audio_buffer.clear' }, 'clear PTT buffer');
 
         // No placeholder; we'll rely on server transcript once ready.
     };
@@ -318,8 +318,8 @@ function App() {
             return;
 
         setIsPTTUserSpeaking(false);
-        sendClientEvent({type: 'input_audio_buffer.commit'}, 'commit PTT');
-        sendClientEvent({type: 'response.create'}, 'trigger response PTT');
+        sendClientEvent({ type: 'input_audio_buffer.commit' }, 'commit PTT');
+        sendClientEvent({ type: 'response.create' }, 'trigger response PTT');
     };
 
     const onToggleConnection = () => {
@@ -440,7 +440,8 @@ function App() {
 
     return (
         <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 relative">
-            <div className="p-5 text-lg font-semibold flex justify-between items-center">
+            {/* Header - responsive layout */}
+            <div className="p-3 md:p-5 text-lg font-semibold flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 safe-area-top">
                 <div
                     className="flex items-center cursor-pointer"
                     onClick={() => window.location.reload()}
@@ -454,19 +455,20 @@ function App() {
                             className="mr-2"
                         />
                     </div>
-                    <div>
+                    <div className="text-base md:text-lg">
                         Realtime API <span className="text-gray-500">Agents</span>
                     </div>
                 </div>
-                <div className="flex items-center">
-                    <label className="flex items-center text-base gap-1 mr-2 font-medium">
+                {/* Controls - wrap on mobile */}
+                <div className="flex flex-wrap items-center gap-2 md:gap-0 w-full md:w-auto">
+                    <label className="flex items-center text-sm md:text-base gap-1 mr-2 font-medium">
                         Scenario
                     </label>
                     <div className="relative inline-block">
                         <select
                             value={agentSetKey}
                             onChange={handleAgentChange}
-                            className="appearance-none border border-gray-300 rounded-lg text-base px-2 py-1 pr-8 cursor-pointer font-normal focus:outline-none"
+                            className="appearance-none border border-gray-300 rounded-lg text-sm md:text-base px-2 py-1.5 pr-8 cursor-pointer font-normal focus:outline-none"
                         >
                             {Object.keys(allAgentSets).map((agentKey) => (
                                 <option key={agentKey} value={agentKey}>
@@ -487,15 +489,15 @@ function App() {
                     </div>
 
                     {agentSetKey && (
-                        <div className="flex items-center ml-6">
-                            <label className="flex items-center text-base gap-1 mr-2 font-medium">
+                        <div className="flex items-center ml-2 md:ml-6">
+                            <label className="flex items-center text-sm md:text-base gap-1 mr-2 font-medium">
                                 Agent
                             </label>
                             <div className="relative inline-block">
                                 <select
                                     value={selectedAgentName}
                                     onChange={handleSelectedAgentChange}
-                                    className="appearance-none border border-gray-300 rounded-lg text-base px-2 py-1 pr-8 cursor-pointer font-normal focus:outline-none"
+                                    className="appearance-none border border-gray-300 rounded-lg text-sm md:text-base px-2 py-1.5 pr-8 cursor-pointer font-normal focus:outline-none"
                                 >
                                     {selectedAgentConfigSet?.map((agent) => (
                                         <option key={agent.name} value={agent.name}>
@@ -523,18 +525,28 @@ function App() {
                 </div>
             </div>
 
-            <div className="flex flex-1 gap-2 px-2 overflow-hidden relative">
-                <Transcript
-                    userText={userText}
-                    setUserText={setUserText}
-                    onSendMessage={handleSendTextMessage}
-                    downloadRecording={downloadRecording}
-                    canSend={
-                        sessionStatus === "CONNECTED"
-                    }
-                />
+            {/* Main content area - stack vertically on mobile, side by side on desktop */}
+            <div className="flex flex-col md:flex-row flex-1 gap-2 px-2 min-h-0 overflow-hidden">
+                {/* Transcript container */}
+                <div className={`flex flex-col overflow-hidden rounded-xl ${isEventsPaneExpanded
+                        ? 'h-1/2 md:h-auto md:flex-1'
+                        : 'flex-1'
+                    }`}>
+                    <Transcript
+                        userText={userText}
+                        setUserText={setUserText}
+                        onSendMessage={handleSendTextMessage}
+                        downloadRecording={downloadRecording}
+                        canSend={sessionStatus === "CONNECTED"}
+                    />
+                </div>
 
-                <Events isExpanded={isEventsPaneExpanded}/>
+                {/* Events panel container - fixed height on mobile */}
+                {isEventsPaneExpanded && (
+                    <div className="flex flex-col h-1/2 md:h-auto md:w-1/2 overflow-hidden rounded-xl">
+                        <Events isExpanded={isEventsPaneExpanded} />
+                    </div>
+                )}
             </div>
 
             <BottomToolbar
