@@ -55,7 +55,7 @@ Cấu trúc thư mục chính nằm trong `src/app`:
    ```
 3. Cấu hình biến môi trường:
    - Tạo file `.env` từ `.env.sample`.
-   - Thêm `OPENAI_API_KEY` của bạn vào `.env`.
+   - Thêm `OPENAI_API_KEY` và `BACKEND_API_KEY` vào file `.env`.
 
 ### Chạy ứng dụng:
 ```bash
@@ -122,10 +122,10 @@ Client gọi API `/api/session` để lấy token tạm thời (ephemeral key) t
 
 **File:** `src/app/api/session/route.ts`
 ```typescript
-const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+const response = await fetch("https://lang-tutor-722229371534.asia-southeast1.run.app/session", {
   method: "POST",
   headers: {
-    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    Authorization: `${process.env.BACKEND_API_KEY}`,
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
