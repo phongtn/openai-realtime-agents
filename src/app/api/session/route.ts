@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const response = await fetch(
-      "https://api.openai.com/v1/realtime/sessions",
+      // const apiEndpoint = "https://api.openai.com/v1/realtime/sessions";
+      const apiEndpoint = "https://lang-tutor-722229371534.asia-southeast1.run.app/session";
+      const response = await fetch(
+      apiEndpoint,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `${process.env.BACKEND_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
